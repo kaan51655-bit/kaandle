@@ -1235,13 +1235,13 @@ elif page == "Play Mode":
     if st.session_state.roast_message:
         st.error(f"👨‍⚕️ **The Professor says:**\n\n{st.session_state.roast_message}")
 
-
-    # User Input & Buttons
+# User Input & Buttons
     if not st.session_state.game_over:
         guess = st.text_input("What is your diagnosis?", placeholder="Type disease name...").strip().lower()
         
-    col1, col2 = st.columns(2)
-   with col1:
+        col1, col2 = st.columns(2)
+        
+        with col1:
             if st.button("Submit Diagnosis", use_container_width=True, type="primary"):
                 if guess:
                     st.session_state.guesses.append(guess)
@@ -1278,6 +1278,7 @@ elif page == "Play Mode":
                 else:
                     st.session_state.game_over = True
                 st.rerun()
+ 
 
     # Game Over Screen
     if st.session_state.game_over:
