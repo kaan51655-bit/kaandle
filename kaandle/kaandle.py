@@ -7,7 +7,40 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
+# Gemini API Setup (Takes the key from Streamlit Secrets)
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    ai_model = None
 
+def get_sarcastic_response(actual_disease, clues, user_guess):
+    if not ai_model:
+        return "Our AI Professor is currently on a coffee break. I'll just say: 'Wrong answer'."
+    
+    # Combine the revealed clues into a single string
+    clues_text = " ".join([clue["text"] for clue in clues])
+    
+    prompt = f"""
+    You are the world's most brilliant but arrogant, sarcastic, and witty medical professor (like Dr. House). 
+    Your medical student (the player) just made a terribly wrong diagnosis for a patient.
+    
+    Actual Disease of the Patient: {actual_disease}
+    Student's Ridiculous Guess: {user_guess}
+    Patient's Revealed Clues/Findings: {clues_text}
+
+    Your tasks:
+    1. Mock the student's guess with a witty, sarcastic, and condescending (but not overly offensive) tone.
+    2. Explain WHY this guess makes absolutely no sense based ONLY on the provided clues/findings.
+    3. NEVER REVEAL THE ACTUAL DISEASE! Just make them think and realize their mistake.
+    4. Keep your response short and punchy (Maximum 3-4 sentences). Respond completely in English.
+    """
+    
+    try:
+        response = ai_model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return "Wrong guess! (The professor is too busy to roast you right now.)"
 # Custom CSS for a better UI
 st.markdown("""
 <style>
@@ -1146,7 +1179,8 @@ if 'won' not in st.session_state:
     st.session_state.won = False
 if 'guesses' not in st.session_state:
     st.session_state.guesses = []
-
+if 'roast_message' not in st.session_state:
+    st.session_state.roast_message = None
 def reset_game(case_id):
     st.session_state.current_case_id = case_id
     st.session_state.current_clue_index = 1
@@ -1197,20 +1231,36 @@ elif page == "Play Mode":
 
     st.divider()
 
+    # YAPAY ZEKA CEVABINI EKRANDA GÖSTER
+    if st.session_state.roast_message:
+        st.error(f"👨‍⚕️ **The Professor says:**\n\n{st.session_state.roast_message}")
+
+
     # User Input & Buttons
     if not st.session_state.game_over:
         guess = st.text_input("What is your diagnosis?", placeholder="Type disease name...").strip().lower()
         
-        col1, col2 = st.columns(2)
-        with col1:
+    col1, col2 = st.columns(2)
+   with col1:
             if st.button("Submit Diagnosis", use_container_width=True, type="primary"):
                 if guess:
                     st.session_state.guesses.append(guess)
                     if any(accepted in guess for accepted in case['accepted_answers']):
                         st.session_state.won = True
                         st.session_state.game_over = True
+                        st.session_state.roast_message = None # Doğru bilirse laf sokmayı sil
                         st.rerun()
                     else:
+                        # YANLIŞ CEVAP - PROFESÖRÜ ÇAĞIR!
+                        with st.spinner("The Professor is frowning, preparing a roast..."):
+                            revealed_clues = case["clues"][:st.session_state.current_clue_index]
+                            roast = get_sarcastic_response(
+                                actual_disease=case["disease"],
+                                clues=revealed_clues,
+                                user_guess=guess
+                            )
+                            st.session_state.roast_message = roast # Cevabı hafızaya al
+                        
                         if st.session_state.current_clue_index < total_clues:
                             st.session_state.current_clue_index += 1
                         else:
@@ -1222,6 +1272,7 @@ elif page == "Play Mode":
         with col2:
             if st.button("Skip / Next Clue", use_container_width=True):
                 st.session_state.guesses.append("Skipped")
+                st.session_state.roast_message = None # Pas geçerse eski laf sokmayı sil
                 if st.session_state.current_clue_index < total_clues:
                     st.session_state.current_clue_index += 1
                 else:
