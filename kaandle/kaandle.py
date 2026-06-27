@@ -10,10 +10,26 @@ st.set_page_config(
 # Gemini API Setup (Takes the key from Streamlit Secrets)
 # Gemini API Setup (Takes the key from Streamlit Secrets)
 if "GEMINI_API_KEY" in st.secrets:
-    # .strip() komutu kopyalamadan kaynaklı görünmez boşlukları ve hataları siler
     temiz_sifre = st.secrets["GEMINI_API_KEY"].strip()
     genai.configure(api_key=temiz_sifre)
-    ai_model = genai.GenerativeModel('gemini-pro')
+    
+    # OTOMATİK MODEL BULUCU
+    try:
+        secilen_model = None
+        # Hesaba tanımlı ve metin üretebilen modelleri Google'dan çek
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                secilen_model = m.name  # İlk uygun modeli hafızaya al
+                # Eğer içinde 'flash' veya 'pro' geçen bir model bulursa onu tercih et
+                if 'flash' in m.name.lower() or 'pro' in m.name.lower():
+                    break 
+        
+        if secilen_model:
+            ai_model = genai.GenerativeModel(secilen_model)
+        else:
+            ai_model = None
+    except Exception as e:
+        ai_model = None
 else:
     ai_model = None
 
