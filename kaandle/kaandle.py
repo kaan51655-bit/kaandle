@@ -13,7 +13,7 @@ if "GEMINI_API_KEY" in st.secrets:
     # .strip() komutu kopyalamadan kaynaklı görünmez boşlukları ve hataları siler
     temiz_sifre = st.secrets["GEMINI_API_KEY"].strip()
     genai.configure(api_key=temiz_sifre)
-    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+    ai_model = genai.GenerativeModel('gemini-pro')
 else:
     ai_model = None
 
