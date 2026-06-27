@@ -8,8 +8,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 # Gemini API Setup (Takes the key from Streamlit Secrets)
+# Gemini API Setup (Takes the key from Streamlit Secrets)
 if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    # .strip() komutu kopyalamadan kaynaklı görünmez boşlukları ve hataları siler
+    temiz_sifre = st.secrets["GEMINI_API_KEY"].strip()
+    genai.configure(api_key=temiz_sifre)
     ai_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     ai_model = None
