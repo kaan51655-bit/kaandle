@@ -1,5 +1,5 @@
 import streamlit as st
-
+import google.generativeai as genai
 # Page Configuration (Must be first)
 st.set_page_config(
     page_title="Kaandle",
