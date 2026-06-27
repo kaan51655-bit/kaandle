@@ -40,7 +40,7 @@ def get_sarcastic_response(actual_disease, clues, user_guess):
         response = ai_model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return "Wrong guess! (The professor is too busy to roast you right now.)"
+        return f"Hata Detayı: {str(e)}"
 # Custom CSS for a better UI
 st.markdown("""
 <style>
